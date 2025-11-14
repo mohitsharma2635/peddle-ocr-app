@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Peddle OCR</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: #f7f8fb;
+        min-height: 100vh;
+        padding: 30px;
+        color: #1f2937;
+      }
+
+      .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 36px;
+        box-shadow: 0 10px 30px rgba(31, 41, 55, 0.08);
+        border: 1px solid #e6e9ef;
+      }
+
+      h1 {
+        color: #0f1724;
+        text-align: center;
+        margin-bottom: 8px;
+        font-size: 2.25em;
+        font-weight: 700;
+      }
+
+      .subtitle {
+        text-align: center;
+        color: #6b7280;
+        margin-bottom: 26px;
+        font-size: 1.05em;
+      }
+
+      .upload-section {
+        border: 2px dashed #d1d5db;
+        border-radius: 10px;
+        padding: 34px;
+        text-align: center;
+        background: #ffffff;
+        margin-bottom: 28px;
+        transition: all 0.25s ease;
+      }
+
+      .upload-section:hover {
+        border-color: #9ca3af;
+        background: #fbfdff;
+      }
+
+      .upload-section.dragover {
+        border-color: #10b981;
+        background: #f0fdf4;
+      }
+
+      .file-input {
+        display: none;
+      }
+
+      .upload-btn {
+        background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+        color: white;
+        padding: 12px 34px;
+        border: none;
+        border-radius: 20px;
+        font-size: 1em;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.12);
+      }
+
+      .upload-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px rgba(37, 99, 235, 0.15);
+      }
+
+      .file-info {
+        margin-top: 14px;
+        color: #374151;
+        font-size: 0.95em;
+      }
+
+      .process-btn {
+        background: #0ea5a4;
+        color: white;
+        padding: 10px 26px;
+        border: none;
+        border-radius: 20px;
+        font-size: 0.98em;
+        cursor: pointer;
+        display: none;
+        margin: 18px auto;
+        transition: all 0.2s ease;
+      }
+
+      .process-btn:hover {
+        background: #14b8a6;
+        transform: scale(1.03);
+      }
+
+      .process-btn:disabled {
+        background: #cbd5e1;
+        cursor: not-allowed;
+        transform: scale(1);
+      }
+
+      .loading {
+        display: none;
+        text-align: center;
+        margin: 28px 0;
+        color: #374151;
+      }
+
+      .spinner {
+        border: 4px solid #f3f4f6;
+        border-top: 4px solid #2563eb;
+        border-radius: 50%;
+        width: 44px;
+        height: 44px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 12px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .results {
+        display: none;
+        margin-top: 26px;
+      }
+
+      .stats {
+        background: #f8fafc;
+        padding: 16px;
+        border-radius: 10px;
+        margin-bottom: 18px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+        border: 1px solid #eef2ff;
+      }
+
+      .stat-item {
+        text-align: center;
+      }
+
+      .stat-value {
+        font-size: 1.6em;
+        font-weight: 700;
+        color: #111827;
+      }
+
+      .stat-label {
+        color: #6b7280;
+        margin-top: 6px;
+        font-size: 0.92em;
+      }
+
+      .images-section {
+        margin: 18px 0;
+      }
+
+      .image-container {
+        margin: 18px 0;
+        border: 1px solid #e6e9ef;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fff;
+      }
+
+      .image-header {
+        background: #111827;
+        color: white;
+        padding: 10px 14px;
+        font-weight: 600;
+      }
+
+      .highlighted-image {
+        width: 100%;
+        display: block;
+      }
+
+      .actions {
+        display: flex;
+        gap: 14px;
+        justify-content: center;
+        margin-top: 18px;
+      }
+
+      .download-btn {
+        background: #ef4444;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 18px;
+        cursor: pointer;
+        font-size: 0.96em;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-block;
+      }
+
+      .download-btn:hover {
+        background: #f43f5e;
+        transform: scale(1.03);
+      }
+
+      .error {
+        background: #fff1f2;
+        color: #9b1c1c;
+        padding: 12px;
+        border-radius: 8px;
+        margin: 18px 0;
+        display: none;
+        border-left: 4px solid #f87171;
+      }
+
+      /* make interactive elements obvious even without JS */
+      .upload-btn,
+      .process-btn,
+      .download-btn {
+        user-select: none;
+      }
+
+      @media (max-width: 640px) {
+        .container {
+          padding: 20px;
+        }
+        h1 {
+          font-size: 1.6em;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Peddle OCR</h1>
+      <p class="subtitle">
+        Upload images or PDFs to extract text with bounding boxes
+      </p>
+
+      <div class="upload-section" id="uploadSection">
+        <input
+          type="file"
+          id="fileInput"
+          class="file-input"
+          accept="image/*,.pdf"
+        />
+        <button
+          class="upload-btn"
+          onclick="document.getElementById('fileInput').click()"
+        >
+          📁 Choose File
+        </button>
+        <div class="file-info" id="fileInfo">
+          Supports: JPG, PNG, PDF (Max 10MB)
+        </div>
+      </div>
+
+      <button class="process-btn" id="processBtn">🚀 Process OCR</button>
+
+      <div class="error" id="error"></div>
+
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Processing OCR... This may take a minute.</p>
+      </div>
+
+      <div class="results" id="results">
+        <div class="stats" id="stats"></div>
+
+        <div class="images-section" id="imagesSection"></div>
+
+        <div class="actions">
+          <button class="download-btn" id="downloadJson">
+            📥 Download JSON
+          </button>
+        </div>
+      </div>
+    </div>
+    <script>
+      let selectedFile = null;
+      let ocrData = null;
+
+      const fileInput = document.getElementById("fileInput");
+      const uploadSection = document.getElementById("uploadSection");
+      const fileInfo = document.getElementById("fileInfo");
+      const processBtn = document.getElementById("processBtn");
+      const loading = document.getElementById("loading");
+      const results = document.getElementById("results");
+      const error = document.getElementById("error");
+      const stats = document.getElementById("stats");
+      const imagesSection = document.getElementById("imagesSection");
+      const downloadJson = document.getElementById("downloadJson");
+
+      // File selection
+      fileInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          handleFileSelect(file);
+        }
+      });
+
+      // Drag and drop
+      uploadSection.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        uploadSection.classList.add("dragover");
+      });
+
+      uploadSection.addEventListener("dragleave", () => {
+        uploadSection.classList.remove("dragover");
+      });
+
+      uploadSection.addEventListener("drop", (e) => {
+        e.preventDefault();
+        uploadSection.classList.remove("dragover");
+        const file = e.dataTransfer.files[0];
+        if (file) {
+          handleFileSelect(file);
+        }
+      });
+
+      function handleFileSelect(file) {
+        const validTypes = [
+          "image/jpeg",
+          "image/png",
+          "image/jpg",
+          "application/pdf",
+        ];
+        if (!validTypes.includes(file.type)) {
+          showError("Please select a valid image (JPG, PNG) or PDF file.");
+          return;
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+          showError("File size must be less than 10MB.");
+          return;
+        }
+
+        selectedFile = file;
+        fileInfo.textContent = `Selected: ${file.name} (${(
+          file.size /
+          1024 /
+          1024
+        ).toFixed(2)} MB)`;
+        processBtn.style.display = "block";
+        hideError();
+        results.style.display = "none";
+      }
+
+      // Process OCR
+      processBtn.addEventListener("click", async () => {
+        if (!selectedFile) return;
+
+        processBtn.disabled = true;
+        loading.style.display = "block";
+        results.style.display = "none";
+        hideError();
+
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+
+        try {
+          const response = await fetch("http://localhost:3000/api/ocr", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) {
+            throw new Error("OCR processing failed");
+          }
+
+          const data = await response.json();
+          ocrData = data;
+          displayResults(data);
+        } catch (err) {
+          showError("Error: " + err.message);
+        } finally {
+          loading.style.display = "none";
+          processBtn.disabled = false;
+        }
+      });
+
+      function displayResults(data) {
+        // Display stats
+        const avgConfidence =
+          data.results.length > 0
+            ? (
+                data.results.reduce((sum, r) => sum + r.confidence, 0) /
+                data.results.length
+              ).toFixed(2)
+            : 0;
+
+        const pages = new Set(data.results.map((r) => r.page)).size;
+
+        stats.innerHTML = `
+                <div class="stat-item">
+                    <div class="stat-value">${data.totalWords}</div>
+                    <div class="stat-label">Words Detected</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${avgConfidence}%</div>
+                    <div class="stat-label">Avg Confidence</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${pages}</div>
+                    <div class="stat-label">Pages Processed</div>
+                </div>
+            `;
+
+        // Display highlighted images
+        imagesSection.innerHTML = "";
+        data.highlightedImages.forEach((img) => {
+          const container = document.createElement("div");
+          container.className = "image-container";
+          container.innerHTML = `
+                    <div class="image-header">Page ${img.page} - Highlighted Text Regions</div>
+                    <img src="${img.url}" alt="Highlighted page ${img.page}" class="highlighted-image">
+                `;
+          imagesSection.appendChild(container);
+        });
+
+        results.style.display = "block";
+      }
+
+      // Download JSON
+      downloadJson.addEventListener("click", () => {
+        if (!ocrData) return;
+
+        const jsonStr = JSON.stringify(ocrData, null, 2);
+        const blob = new Blob([jsonStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `ocr-results-${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      function showError(message) {
+        error.textContent = message;
+        error.style.display = "block";
+      }
+
+      function hideError() {
+        error.style.display = "none";
+      }
+    </script>
+  </body>
+</html>
