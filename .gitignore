@@ -1,0 +1,99 @@
+# Node
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime / process files
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage
+coverage/
+.nyc_output
+
+# Build output
+dist/
+build/
+out/
+
+# Framework caches
+.cache/
+.next/
+.parcel-cache/
+
+# Dependency directories
+/.pnp
+.pnp.js
+.pnp.cjs
+
+# Environment files (keep secrets out of repo)
+.env
+.env.local
+.env.*.local
+
+# Uploaded/generated files
+uploads/
+
+# OS / Editor files
+.DS_Store
+.vscode/
+.idea/
+*.swp
+```// filepath: /Users/mohit/javascript-ocr-app/.gitignore
+# Node
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime / process files
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage
+coverage/
+.nyc_output
+
+# Build output
+dist/
+build/
+out/
+
+# Framework caches
+.cache/
+.next/
+.parcel-cache/
+
+# Dependency directories
+/.pnp
+.pnp.js
+.pnp.cjs
+
+# Environment files (keep secrets out of repo)
+.env
+.env.local
+.env.*.local
+
+# Uploaded/generated files
+uploads/
+
+# OS / Editor files
+.DS_Store
+.vscode/
+.idea/
+*.swp
