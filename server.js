@@ -8,17 +8,22 @@ const cors = require('cors');
 const pdfParse = require('pdf-parse');
 
 const app = express();
-const PORT = 3000;
+
+// ✅ Use PORT from environment (required for Render/Railway/Heroku etc.)
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+
+// ✅ Use absolute path for static frontend
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = 'uploads';
+    // ✅ Ensure uploads directory exists with absolute path
+    const uploadDir = path.join(__dirname, 'uploads');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir);
     }
@@ -42,7 +47,6 @@ async function pdfToImages(pdfPath) {
   pdfjsLib.GlobalWorkerOptions.workerSrc = null;
   
   const dataBuffer = fs.readFileSync(pdfPath);
-  // Convert Buffer to Uint8Array
   const uint8Array = new Uint8Array(dataBuffer);
   const loadingTask = pdfjsLib.getDocument({ data: uint8Array });
   const pdfDocument = await loadingTask.promise;
@@ -205,7 +209,7 @@ app.post('/api/ocr', upload.single('file'), async (req, res) => {
         const ocrResults = await performOCROnCanvas(canvas, pageNumber);
         allOcrResults = allOcrResults.concat(ocrResults);
         
-        const outputPath = path.join('uploads', `highlighted-page-${pageNumber}-${Date.now()}.png`);
+        const outputPath = path.join(__dirname, 'uploads', `highlighted-page-${pageNumber}-${Date.now()}.png`);
         await generateHighlightedImageFromCanvas(canvas, ocrResults, outputPath);
         highlightedImages.push({
           page: pageNumber,
@@ -218,7 +222,7 @@ app.post('/api/ocr', upload.single('file'), async (req, res) => {
       const ocrResults = await performOCR(filePath);
       allOcrResults = ocrResults;
       
-      const outputPath = path.join('uploads', `highlighted-${Date.now()}.png`);
+      const outputPath = path.join(__dirname, 'uploads', `highlighted-${Date.now()}.png`);
       await generateHighlightedImage(filePath, ocrResults, outputPath);
       highlightedImages.push({
         page: 1,
@@ -237,6 +241,7 @@ app.post('/api/ocr', upload.single('file'), async (req, res) => {
       results: allOcrResults,
       highlightedImages: highlightedImages.map(img => ({
         page: img.page,
+        // ✅ URL path stays relative for frontend
         url: `/uploads/${img.filename}`
       }))
     };
@@ -258,11 +263,11 @@ app.post('/api/ocr', upload.single('file'), async (req, res) => {
   }
 });
 
-// Serve uploaded files
-app.use('/uploads', express.static('uploads'));
+// Serve uploaded files (highlighted images)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`OCR Server running on http://localhost:${PORT}`);
-  console.log('Upload a file to get started!');
+  console.log(`✅ OCR Server running on port ${PORT}`);
+  console.log('Ready to accept OCR requests!');
 });
